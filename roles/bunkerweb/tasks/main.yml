@@ -41,3 +41,22 @@
       - "{{ docker_dir }}/bunkerweb/data:/data"
       - "/lib/modules:/lib/modules"
     restart_policy: unless-stopped
+
+- name: Make sure the Bunkerweb-ui container is created and running
+  register: bunkerweb-ui_result
+  retries: 5
+  until: bunkerweb-ui_result is succeeded
+  community.general.docker_container:
+    name: "bunkerweb-ui"
+    image: "bunkerity/bunkerweb-ui:{{ bunkerweb_version }}"
+    depends_on:
+      - bunkerweb
+    environment:
+      - DATABASE_URI=mariadb+pymysql://bunkerweb:changeme@bw-db:3306/db # Remember to set a stronger password for the database
+      - DOCKER_HOST=tcp://bw-docker:2375
+    networks:
+      - name: wg_network
+        ipv4_address: 10.8.2.10
+    pull: yes
+    state: "started"
+    restart_policy: unless-stopped
